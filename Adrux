@@ -1,0 +1,40 @@
+###########################################
+# Set up variables                        #
+###########################################
+export bbox=/system/xbin/busybox
+export PATH=$PATH:/system/bin:/usr/bin:/usr/local/bin:/usr/sbin:/usr/local/sbin:/bin:/usr/games:/sbin
+export TERM=linux
+export ROOTFS=/data/debian
+export INITCMD=/bin/bash
+echo 1 > /sys/fs/selinux/disable
+
+###########################################
+# Mount all required partitions           #
+###########################################
+$bbox mount -o bind /dev $ROOTFS/dev
+$bbox mount -t devpts devpts $ROOTFS/dev/pts
+$bbox mount -t proc proc $ROOTFS/proc
+$bbox mount -t sysfs sysfs $ROOTFS/sys
+$bbox mount -o bind /storage/sdcard0 $ROOTFS/media/sdcard0
+$bbox mount -o bind /storage/sdcard1 $ROOTFS/media/sdcard1
+#$bbox mount -o bind,ro /sys/fs/selinux /data/ubuntu/sys/fs/selinux
+
+###########################################
+# For OpenVPN
+###########################################
+$bbox mkdir $ROOTFS/dev/net
+$bbox ln -s /dev/tun $ROOTFS/dev/net/tun
+
+###########################################
+# Sets up network forwarding              #
+###########################################
+$bbox sysctl -w net.ipv4.ip_forward=1
+
+echo "nameserver 8.8.8.8" > $ROOTFS/etc/resolv.conf
+echo "nameserver 8.8.4.4" >> $ROOTFS/etc/resolv.conf
+echo "127.0.0.1 localhost" > $ROOTFS/etc/hosts
+
+###########################################
+# Chroot into ubuntu                      #
+###########################################
+$bbox chroot $ROOTFS $INITCMD
